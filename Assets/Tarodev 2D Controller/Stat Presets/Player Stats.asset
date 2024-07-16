@@ -32,7 +32,7 @@ MonoBehaviour:
   Friction: 70
   AirFrictionMultiplier: 0.6
   DirectionCorrectionMultiplier: 3
-  MaxWalkableSlope: 60
+  MaxWalkableSlope: 180
   ExtraConstantGravity: 33
   BufferedJumpTime: 0.15
   CoyoteTime: 0.15

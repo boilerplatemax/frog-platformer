@@ -24,8 +24,12 @@ namespace TarodevController
 
         #region Interface
 
-        [SerializeField] private LayerMask grappleLayer;
-[SerializeField] private LayerMask ignoreLayer; // Add this line
+        [SerializeField] private float maxVelocity = 10f;
+
+        [SerializeField] private float _maxGrappleLength=10f;
+        
+        [SerializeField] private LayerMask _grappleLayer;
+        [SerializeField] private LayerMask _ignoreLayer;
 
 
         [SerializeField] private float grappleReleaseThreshold = 3.0f; // Add this line
@@ -34,11 +38,11 @@ namespace TarodevController
         private int currentGrapples = 0; // Add this line
 
 
-    [SerializeField] private float grappleReleaseSpeed = 10f;
-    [SerializeField] private float moveToGrappleSpeed = 5f;
-    [SerializeField] private float maxGrappleLength = 15f;
+        [SerializeField] private float grappleReleaseSpeed = 10f;
+        [SerializeField] private float moveToGrappleSpeed = 5f;
+        
 
-    [SerializeField] private float waveFrequency = 5f; // Frequency of the wave
+        [SerializeField] private float waveFrequency = 5f; // Frequency of the wave
         [SerializeField] private float waveAmplitude = 0.5f; // Amplitude of the wave
         [SerializeField] private int lineSegmentCount = 20; // Number of segments in the line
         [SerializeField] private float moveTime = 0f; // Time tracker for animation
@@ -52,7 +56,14 @@ namespace TarodevController
 
         [SerializeField] public float springDamp = 0.5f;
 
+        [SerializeField] public bool slowTimeOnGrapple=true;
+        [SerializeField] public float slowTimeAmount = 0.5f; // The target time scale when grappling
+        [SerializeField] public float lerpSpeed = 1.5f; // Speed of the lerp transition
+
+        private float targetTimeScale;
+
         [SerializeField] public float springFrequency = 1.0f;
+        
 
 
 
@@ -80,7 +91,14 @@ namespace TarodevController
         public bool isPullingUp { get; private set; }
 
         public bool isGrappling { get; private set; }
+        
         public Vector2 grapplePoint { get; private set; }
+
+        public Transform firePoint { get; private set; }
+
+        public LayerMask grappleLayer => _grappleLayer;
+        public LayerMask ignoreLayer => _ignoreLayer;
+        public float maxGrappleLength => _maxGrappleLength;
 
 
         public void AddFrameForce(Vector2 force, bool resetVelocity = false)
@@ -167,7 +185,7 @@ namespace TarodevController
             RemoveTransientVelocity();
 
             SetFrameData();
-
+            
             CalculateCollisions();
             CalculateDirection();
 
@@ -177,7 +195,7 @@ namespace TarodevController
             CalculateDash();
 
             HandleGrappleInput();
-
+            SlowTime();
             CalculateExternalModifiers();
 
             TraceGround();
@@ -186,9 +204,12 @@ namespace TarodevController
 
             CalculateDeathVelocity();
 
+            LimitVelocity();
+
             CleanFrameData();
 
             SaveCharacterState();
+            
 
             
 
@@ -269,6 +290,16 @@ private void CalculateDeathVelocity(){
 }
 
 #endregion
+
+#region Limit Velocity
+private void LimitVelocity() // Add this function
+    {
+        if (_rb.velocity.magnitude > maxVelocity)
+        {
+            _rb.velocity = _rb.velocity.normalized * maxVelocity;
+        }
+    }
+    #endregion
 
 
         #region Frame Data
@@ -968,7 +999,19 @@ private void UpdateGrappleLine()
 
 
 
+#region Slow Time
+private void SlowTime(){
+    if(!slowTimeOnGrapple)return;
+     // Determine the target time scale based on the grappling state
+        targetTimeScale = isGrappling ? slowTimeAmount : 1f;
 
+        // Smoothly transition the time scale
+        Time.timeScale = Mathf.Lerp(Time.timeScale, targetTimeScale, Time.deltaTime * lerpSpeed);
+
+        // Adjust the fixedDeltaTime to maintain consistent physics updates
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+}
+#endregion
 
         #region Crouching
 
@@ -1334,6 +1377,11 @@ private void UpdateGrappleLine()
 
         public bool isGrappling {get;}
 
+        public LayerMask grappleLayer { get;}
+        public LayerMask ignoreLayer { get;}
+
+        public float maxGrappleLength { get;}
+
         public Vector2 grapplePoint {get;}
 
         public int WallDirectionForJump { get; }
@@ -1341,6 +1389,8 @@ private void UpdateGrappleLine()
         public bool ClimbingLadder { get; }
 
         public bool isPullingUp { get; }
+
+        public Transform firePoint { get;}
 
         // External force
         public void AddFrameForce(Vector2 force, bool resetVelocity = false);

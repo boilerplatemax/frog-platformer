@@ -70,3 +70,9 @@ TagManager:
   - name: Player
     uniqueID: 1594022903
     locked: 0
+  - name: Tongue
+    uniqueID: 4099288685
+    locked: 0
+  - name: Selector
+    uniqueID: 2566716247
+    locked: 0
