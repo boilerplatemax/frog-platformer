@@ -66,6 +66,16 @@ namespace TarodevController
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Glide"",
+                    ""type"": ""Button"",
+                    ""id"": ""fn4857g0-4nd9-aj52-84052mg94750"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+
+                {
                     ""name"": ""ExampleAction"",
                     ""type"": ""Button"",
                     ""id"": ""fac85392-9cd4-4c47-a8da-8911e5b74689"",
@@ -309,6 +319,17 @@ namespace TarodevController
                 },
                 {
                     ""name"": """",
+                    ""id"": ""e874dfd6-65b4-49c9-9b35-26c6e3f0d9e1"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Glide"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""13f43569-8981-4c2d-83eb-cbf0c247c466"",
                     ""path"": ""<Keyboard>/e"",
                     ""interactions"": """",
@@ -390,6 +411,8 @@ namespace TarodevController
             m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
             m_Player_Dash = m_Player.FindAction("Dash", throwIfNotFound: true);
             m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
+            m_Player_Glide = m_Player.FindAction("Glide", throwIfNotFound: true);
+
             m_Player_ExampleAction = m_Player.FindAction("ExampleAction", throwIfNotFound: true);
         }
 
@@ -456,6 +479,9 @@ namespace TarodevController
         private readonly InputAction m_Player_Jump;
         private readonly InputAction m_Player_Dash;
         private readonly InputAction m_Player_Attack;
+
+        private readonly InputAction m_Player_Glide;
+
         private readonly InputAction m_Player_ExampleAction;
         public struct PlayerActions
         {
@@ -465,6 +491,9 @@ namespace TarodevController
             public InputAction @Jump => m_Wrapper.m_Player_Jump;
             public InputAction @Dash => m_Wrapper.m_Player_Dash;
             public InputAction @Attack => m_Wrapper.m_Player_Attack;
+
+            public InputAction @Glide => m_Wrapper.m_Player_Glide;
+
             public InputAction @ExampleAction => m_Wrapper.m_Player_ExampleAction;
             public InputActionMap Get() { return m_Wrapper.m_Player; }
             public void Enable() { Get().Enable(); }
@@ -487,6 +516,9 @@ namespace TarodevController
                 @Attack.started += instance.OnAttack;
                 @Attack.performed += instance.OnAttack;
                 @Attack.canceled += instance.OnAttack;
+                @Glide.started += instance.OnGlide;
+                @Glide.performed += instance.OnGlide;
+                @Glide.canceled += instance.OnGlide;
                 @ExampleAction.started += instance.OnExampleAction;
                 @ExampleAction.performed += instance.OnExampleAction;
                 @ExampleAction.canceled += instance.OnExampleAction;
@@ -506,6 +538,9 @@ namespace TarodevController
                 @Attack.started -= instance.OnAttack;
                 @Attack.performed -= instance.OnAttack;
                 @Attack.canceled -= instance.OnAttack;
+                @Glide.started -= instance.OnGlide;
+                @Glide.performed -= instance.OnGlide;
+                @Glide.canceled -= instance.OnGlide;
                 @ExampleAction.started -= instance.OnExampleAction;
                 @ExampleAction.performed -= instance.OnExampleAction;
                 @ExampleAction.canceled -= instance.OnExampleAction;
@@ -577,6 +612,8 @@ namespace TarodevController
             void OnJump(InputAction.CallbackContext context);
             void OnDash(InputAction.CallbackContext context);
             void OnAttack(InputAction.CallbackContext context);
+
+            void OnGlide(InputAction.CallbackContext context);
             void OnExampleAction(InputAction.CallbackContext context);
         }
     }

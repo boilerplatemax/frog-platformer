@@ -1,5 +1,4 @@
 using UnityEngine;
-
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -10,7 +9,7 @@ namespace TarodevController
     {
 #if ENABLE_INPUT_SYSTEM
         private PlayerInputActions _actions;
-        private InputAction _move, _jump, _dash;
+        private InputAction _move, _jump, _dash, _glide;
 
         private void Awake()
         {
@@ -18,6 +17,7 @@ namespace TarodevController
             _move = _actions.Player.Move;
             _jump = _actions.Player.Jump;
             _dash = _actions.Player.Dash;
+            _glide = _actions.Player.Glide;
         }
 
         private void OnEnable() => _actions.Enable();
@@ -30,18 +30,22 @@ namespace TarodevController
             {
                 JumpDown = _jump.WasPressedThisFrame(),
                 JumpHeld = _jump.IsPressed(),
+                JumpRelease = _jump.WasReleasedThisFrame(),
                 DashDown = _dash.WasPressedThisFrame(),
+                GlideHeld = _glide.IsPressed(), // Add this line to gather the Glide input
                 Move = _move.ReadValue<Vector2>()
             };
         }
 #else
-    public FrameInput Gather()
+        public FrameInput Gather()
         {
             return new FrameInput
             {
                 JumpDown = Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.C),
                 JumpHeld = Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.C),
+                JumpRelease = Input.GetKeyUp(KeyCode.Space) || Input.GetKeyUp(KeyCode.C),
                 DashDown = Input.GetKeyDown(KeyCode.X) || Input.GetMouseButtonDown(1),
+                GlideHeld = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift), // Add this line to gather the Glide input
                 Move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"))
             };
         }
@@ -52,7 +56,9 @@ namespace TarodevController
     {
         public Vector2 Move;
         public bool JumpDown;
+        public bool JumpRelease;
         public bool JumpHeld;
         public bool DashDown;
+        public bool GlideHeld; // Add this property to capture the Glide input
     }
 }

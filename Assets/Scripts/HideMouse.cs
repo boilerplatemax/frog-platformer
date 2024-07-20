@@ -13,5 +13,8 @@ public class HideMouse : MonoBehaviour
         // Locks the cursor to the center of the game window
         //Cursor.lockState = CursorLockMode.Locked;
     }
+    void Update(){
+        Cursor.visible = false;
+    }
 
 }

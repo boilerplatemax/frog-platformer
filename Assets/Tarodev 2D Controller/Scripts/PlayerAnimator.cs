@@ -103,7 +103,8 @@ namespace TarodevController
     HandleIdleDetection();
     HandlePullUpDetection();
     CheckIfFalling();
-
+    HandleGlide();
+    HandleLandingVelocityCheck();
     HandleCharacterTilt(xInput);
     HandleCrouching();
     HandleWallSlideEffects();
@@ -296,6 +297,38 @@ private void CheckIfFalling()
         }
 
         #endregion
+
+        #region Glide
+
+        private void HandleGlide(){
+            if(_player.isGliding){
+                _anim.SetBool("Gliding", true);
+            }
+            else{
+                _anim.SetBool("Gliding", false);
+            }
+        }
+
+        #endregion
+
+        #region Landing Velocity
+
+        private void HandleLandingVelocityCheck(){
+            if (Mathf.Abs(_player.Velocity.y) > 8.0f) {
+                _anim.SetBool("Splat", true);
+            }
+            else {
+                StartCoroutine(ResetSplatAfterDelay(1.0f));
+            }
+        }
+
+        private IEnumerator ResetSplatAfterDelay(float delay) {
+            yield return new WaitForSeconds(delay);
+            _anim.SetBool("Splat", false);
+        }
+
+        #endregion
+
 
         #region Tilt
 

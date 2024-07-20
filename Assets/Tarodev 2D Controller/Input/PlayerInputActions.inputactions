@@ -32,6 +32,17 @@
                     "interactions": "",
                     "initialStateCheck": false
                 },
+
+                {
+                    "name": "Glide",
+                    "type": "Button",
+                    "id": "fn4857g0-4nd9-aj52-84052mg94750",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+
                 {
                     "name": "Attack",
                     "type": "Button",
@@ -161,6 +172,17 @@
                     "action": "Move",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "e874dfd6-65b4-49c9-9b35-26c6e3f0d9e1",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Glide",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 },
                 {
                     "name": "",

@@ -24,8 +24,11 @@ namespace TarodevController
 
         #region Interface
 
-        [SerializeField] private float maxVelocity = 10f;
+        [SerializeField] private float maxVelocity = 60f;
 
+        [SerializeField] private float slowFallVelocity = 5f;
+
+        [SerializeField] private bool inAirToGrapple = true;
         [SerializeField] private float _maxGrappleLength=10f;
         
         [SerializeField] private LayerMask _grappleLayer;
@@ -52,8 +55,6 @@ namespace TarodevController
         [SerializeField] public float autoAimRadius = 15.0f; // Adjust as needed
 
         [SerializeField] public Vector2 grappleOffset = Vector2.zero; // Offset for the grapple point
-        [SerializeField] public bool useSpringJoint = true; // Toggle between SpringJoint2D and DistanceJoint2D
-
         [SerializeField] public float springDamp = 0.5f;
 
         [SerializeField] public bool slowTimeOnGrapple=true;
@@ -63,6 +64,8 @@ namespace TarodevController
         private float targetTimeScale;
 
         [SerializeField] public float springFrequency = 1.0f;
+
+        [SerializeField] public bool useKeyInputForGrapple = false; // Add this variable to toggle grapple mode
         
 
 
@@ -91,6 +94,8 @@ namespace TarodevController
         public bool isPullingUp { get; private set; }
 
         public bool isGrappling { get; private set; }
+
+        public bool isGliding { get; private set; }
         
         public Vector2 grapplePoint { get; private set; }
 
@@ -203,7 +208,7 @@ namespace TarodevController
             CalculateCrouch();
 
             CalculateDeathVelocity();
-
+            SlowFall();
             LimitVelocity();
 
             CleanFrameData();
@@ -257,7 +262,7 @@ namespace TarodevController
 
         #region Input
 
-        private FrameInput _frameInput;
+        public FrameInput _frameInput;
 
         private void GatherInput()
         {
@@ -291,7 +296,7 @@ private void CalculateDeathVelocity(){
 
 #endregion
 
-#region Limit Velocity
+#region Velocity
 private void LimitVelocity() // Add this function
     {
         if (_rb.velocity.magnitude > maxVelocity)
@@ -299,7 +304,35 @@ private void LimitVelocity() // Add this function
             _rb.velocity = _rb.velocity.normalized * maxVelocity;
         }
     }
-    #endregion
+#endregion
+
+
+#region Slow Fall
+[SerializeField] private float slowFallGravityScale = 0.25f; // Gravity scale when gliding
+[SerializeField] private float normalGravityScale = 1f; // Normal gravity scale
+
+private void SlowFall()
+{
+    if (_frameInput.GlideHeld&&!_isOnWall)
+    {
+        isGliding=true;
+        // Apply slow fall by reducing gravity scale
+        _rb.gravityScale = slowFallGravityScale;
+        // Ensure the player's downward velocity doesn't exceed slowFallVelocity
+        if (_rb.velocity.y < -slowFallVelocity)
+        {
+            _rb.velocity = new Vector2(_rb.velocity.x, -slowFallVelocity);
+        }
+    }
+    else
+    {
+        isGliding=false;
+        // Reset to normal gravity scale when not gliding
+        _rb.gravityScale = normalGravityScale;
+    }
+}
+#endregion
+
 
 
         #region Frame Data
@@ -647,7 +680,7 @@ private void LimitVelocity() // Add this function
                 if (CanWallJump) ExecuteJump(JumpType.WallJump);
                 else if (_grounded || ClimbingLadder) ExecuteJump(JumpType.Jump);
                 else if (CanUseCoyote) ExecuteJump(JumpType.Coyote);
-                else if (CanAirJump) ExecuteJump(JumpType.AirJump);
+                else if (CanAirJump&&!isGliding) ExecuteJump(JumpType.AirJump);
             }
 
             if ((!_endedJumpEarly && !_grounded && !_frameInput.JumpHeld && Velocity.y > 0) || Velocity.y < 0) _endedJumpEarly = true; // Early end detection
@@ -796,44 +829,64 @@ private void StartPullingUp(Vector2 targetPosition)
     #endregion
 
 
-
-
-    
 #region Grapple
+
+public float grappleXRange = 20f;
+public float grappleYRange = 13f;
 
 private LineRenderer lineRenderer;
 private SpringJoint2D springJoint;
-
 private DistanceJoint2D distanceJoint;
-
 private Transform grappledObject;
 
-
-
+public bool canGrapple;
 
 private void HandleGrappleInput()
 {
-    if (!_alive)
+    if (!_alive || (inAirToGrapple && _grounded) || _isOnWall)
     {
-        ReleaseGrapple();
+        if (isGrappling) ReleaseGrapple();
+        canGrapple = false;
+        return;
+    }
+    else
+    {
+        canGrapple = true;
     }
 
-    if (UnityEngine.Input.GetMouseButtonDown(0) && currentGrapples < maxGrapples)
+    if (useKeyInputForGrapple)
     {
-        Debug.Log("Left mouse button pressed - starting grapple");
-        StartGrapple();
-    }
+        if (_frameInput.JumpDown && currentGrapples < maxGrapples)
+        {
+            Debug.Log("Jump key pressed - starting grapple");
+            StartGrapple();
+        }
 
-    if (UnityEngine.Input.GetMouseButtonUp(0))
+        if (_frameInput.JumpRelease)
+        {
+            Debug.Log("Jump key released - releasing grapple");
+            ReleaseGrapple();
+        }
+    }
+    else
     {
-        Debug.Log("Left mouse button released - releasing grapple");
-        ReleaseGrapple();
+        if (UnityEngine.Input.GetMouseButtonDown(0) && currentGrapples < maxGrapples)
+        {
+            Debug.Log("Left mouse button pressed - starting grapple");
+            StartGrapple();
+        }
+
+        if (UnityEngine.Input.GetMouseButtonUp(0))
+        {
+            Debug.Log("Left mouse button released - releasing grapple");
+            ReleaseGrapple();
+        }
     }
 
     if (isGrappling)
     {
         float distanceToGrapplePoint = Vector2.Distance(transform.position, grapplePoint);
-        if (!UnityEngine.Input.GetMouseButton(0) || distanceToGrapplePoint <= grappleReleaseThreshold)
+        if ((!useKeyInputForGrapple && !UnityEngine.Input.GetMouseButton(0)) || distanceToGrapplePoint <= grappleReleaseThreshold)
         {
             Debug.Log("Releasing grapple");
             ReleaseGrapple();
@@ -843,7 +896,6 @@ private void HandleGrappleInput()
             Debug.Log("Grappling - updating line renderer");
             UpdateGrappleLine();
 
-            // Apply force towards the grapple point
             Vector2 direction = (grapplePoint - (Vector2)transform.position).normalized;
             float distance = Vector2.Distance(transform.position, grapplePoint);
             _rb.AddForce(direction * moveToGrappleSpeed * distance, ForceMode2D.Force);
@@ -860,32 +912,52 @@ private void StartGrapple()
     }
     else
     {
-        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(UnityEngine.Input.mousePosition);
-        targetPoint = (Vector2)mousePosition;
+        if (useKeyInputForGrapple)
+        {
+            Vector2 inputDirection = new Vector2(_frameInput.Move.x, _frameInput.Move.y).normalized;
+            if (inputDirection != Vector2.zero)
+            {
+                targetPoint = (Vector2)firepoint.position + inputDirection * maxGrappleLength;
+            }
+            else
+            {
+                Debug.Log("Invalid key input direction for grapple");
+                return;
+            }
+        }
+        else
+        {
+            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(UnityEngine.Input.mousePosition);
+            targetPoint = (Vector2)mousePosition;
+        }
     }
 
     Vector2 direction = (targetPoint - (Vector2)firepoint.position).normalized;
-
-    Debug.Log($"Attempting grapple to direction: {direction}");
-
     RaycastHit2D hit = Physics2D.Raycast(firepoint.position, direction, maxGrappleLength, grappleLayer & ~ignoreLayer);
     if (hit.collider != null)
     {
+        Vector2 hitPoint = hit.point;
+        Vector2 relativeHitPoint = hitPoint - (Vector2)transform.position;
+        if (Mathf.Abs(relativeHitPoint.x) > grappleXRange || Mathf.Abs(relativeHitPoint.y) > grappleYRange)
+        {
+            Debug.Log("Grapple hit point is out of bounds relative to the player");
+            return;
+        }
+
         GrappleObjectHandler grappleHandler = hit.collider.GetComponent<GrappleObjectHandler>();
         if (grappleHandler != null && grappleHandler.CanBeGrappled)
         {
-            // Adjust the hit point to the bottom center of the object with an offset
             Bounds bounds = hit.collider.bounds;
             hit.point = new Vector2(bounds.center.x + grappleHandler.grappleOffset.x, bounds.min.y + grappleHandler.grappleOffset.y);
-            grappleHandler.TriggerGrappleAnimation(); // Trigger the animation
-            grappleHandler.StartRegrappleCooldown(); // Start regrapple cooldown
+            grappleHandler.TriggerGrappleAnimation();
+            grappleHandler.StartRegrappleCooldown();
             grappledObject = hit.collider.transform;
         }
-        else if (grappleHandler == null) // If there is no GrappleObjectHandler script
+        else if (grappleHandler == null)
         {
             grappledObject = null;
         }
-        else // If the object cannot be grappled
+        else
         {
             Debug.Log("Grapple missed - object cannot be grappled at this time");
             return;
@@ -937,7 +1009,6 @@ private Vector2 FindNearestGrapplePoint()
         return nearestCollider.transform.position;
     }
 
-    // If no grapple points are found within the radius, return the mouse position as fallback
     return (Vector2)Camera.main.ScreenToWorldPoint(UnityEngine.Input.mousePosition);
 }
 
@@ -948,7 +1019,6 @@ public void ReleaseGrapple()
     springJoint.enabled = false;
     lineRenderer.enabled = false;
     grappledObject = null;
-    
 }
 
 private void UpdateGrappleLine()
@@ -956,7 +1026,6 @@ private void UpdateGrappleLine()
     moveTime += Time.deltaTime;
     lineRenderer.positionCount = lineSegmentCount;
 
-    // Update grapple point if it's attached to a "HookFly" object
     if (grappledObject != null && grappledObject.CompareTag("HookFly"))
     {
         GrappleObjectHandler grappleHandler = grappledObject.GetComponent<GrappleObjectHandler>();
@@ -996,6 +1065,10 @@ private void UpdateGrappleLine()
 }
 
 #endregion
+
+
+
+
 
 
 
@@ -1376,6 +1449,8 @@ private void SlowTime(){
         public int WallDirection { get; }
 
         public bool isGrappling {get;}
+
+        public bool isGliding {get;}
 
         public LayerMask grappleLayer { get;}
         public LayerMask ignoreLayer { get;}

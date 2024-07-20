@@ -5066,6 +5066,7 @@ GameObject:
   - component: {fileID: 4187094214389258246}
   - component: {fileID: 4187094214389258247}
   - component: {fileID: 4187094214389258252}
+  - component: {fileID: 3889482343069543920}
   m_Layer: 17
   m_Name: Fire Fly
   m_TagString: HookFly
@@ -5213,7 +5214,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5180451a52b9b44996fdbe034e2f5f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grappleOffset: {x: 0, y: 1}
+  grappleOffset: {x: 0, y: 3}
   regrappleTime: 1
   animator: {fileID: 4187094214389258247}
 --- !u!95 &4187094214389258247
@@ -5257,3 +5258,19 @@ MonoBehaviour:
   patrolRangeY: {x: -2, y: 3}
   patrolHorizontally: 1
   startDirection: 1
+--- !u!58 &3889482343069543920
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4187094214389258244}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 3
